@@ -46,7 +46,7 @@ jobs:
         run: |
           rm -rf release
           rm -f BOOTSTRAP_TRIGGER.md BOOTSTRAP_TRIGGER_2.md
-          rm -f .github/workflows/bootstrap-source.yml
+          git checkout HEAD -- .github/workflows/test.yml .github/workflows/bootstrap-source.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
