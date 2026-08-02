@@ -1,0 +1,233 @@
+name: Live benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run only the no-content preflight, or execute the approved live study"
+        required: true
+        type: choice
+        options:
+          - preflight
+          - run
+        default: preflight
+      confirmation:
+        description: "For run mode, enter RUN-LIVE-STUDY exactly"
+        required: false
+        type: string
+      max_spend_usd:
+        description: "Requested spend ceiling; cannot exceed the repository policy limit"
+        required: true
+        type: string
+        default: "5.00"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-benchmark
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      ready: ${{ steps.preflight.outputs.ready }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REQUESTED_MAX_SPEND_USD: ${{ inputs.max_spend_usd }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Intent Compiler
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Build runtime policy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path("examples/live-study-policy.json")
+          target = Path("runtime-live-study-policy.json")
+          policy = json.loads(source.read_text(encoding="utf-8"))
+          requested = float(os.environ["REQUESTED_MAX_SPEND_USD"])
+          repository_cap = float(policy["max_total_spend_usd"])
+
+          if requested <= 0:
+              raise SystemExit("Requested spend must be greater than zero.")
+          if requested > repository_cap:
+              raise SystemExit(
+                  f"Requested spend ${requested:.2f} exceeds repository cap ${repository_cap:.2f}."
+              )
+
+          policy["max_total_spend_usd"] = requested
+          target.write_text(json.dumps(policy, indent=2) + "\n", encoding="utf-8")
+          print(f"Runtime spend ceiling: ${requested:.2f}")
+          PY
+
+      - name: Run no-content preflight
+        id: preflight
+        shell: bash
+        run: |
+          mkdir -p live-study-preflight
+          set +e
+          python -m intent_compiler.cli live-study-preflight \
+            --config examples/study_config.json \
+            --scenarios examples/controlled_benchmark_scenarios.json \
+            --profile examples/openai-gpt-5.6-terra-profile.json \
+            --policy runtime-live-study-policy.json \
+            --allow-network \
+            --output live-study-preflight/preflight.json
+          status=$?
+          set -e
+          ready=$(python -c 'import json; print(str(json.load(open("live-study-preflight/preflight.json"))["ready_to_run"]).lower())')
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          echo "Preflight exit code: $status"
+
+      - name: Upload preflight report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-benchmark-preflight
+          path: |
+            live-study-preflight/preflight.json
+            runtime-live-study-policy.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce live-run prerequisites
+        if: ${{ inputs.mode == 'run' }}
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PREFLIGHT_READY: ${{ steps.preflight.outputs.ready }}
+        run: |
+          if [ "$CONFIRMATION" != "RUN-LIVE-STUDY" ]; then
+            echo "Live execution requires confirmation RUN-LIVE-STUDY."
+            exit 1
+          fi
+          if [ "$PREFLIGHT_READY" != "true" ]; then
+            echo "Preflight did not pass. Review the preflight artifact."
+            exit 1
+          fi
+
+  execute:
+    needs: preflight
+    if: ${{ inputs.mode == 'run' && needs.preflight.outputs.ready == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: live-benchmark
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      REQUESTED_MAX_SPEND_USD: ${{ inputs.max_spend_usd }}
+      OUTPUT_DIR: live-study-output
+      AUDIT_DIR: .intent-compiler-live-study
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Intent Compiler
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Rebuild approved runtime policy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path("examples/live-study-policy.json")
+          target = Path("runtime-live-study-policy.json")
+          policy = json.loads(source.read_text(encoding="utf-8"))
+          requested = float(os.environ["REQUESTED_MAX_SPEND_USD"])
+          repository_cap = float(policy["max_total_spend_usd"])
+
+          if requested <= 0 or requested > repository_cap:
+              raise SystemExit("Requested spend is outside the approved repository policy.")
+
+          policy["max_total_spend_usd"] = requested
+          target.write_text(json.dumps(policy, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Execute controlled live study
+        run: |
+          python -m intent_compiler.cli live-study-run \
+            --config examples/study_config.json \
+            --scenarios examples/controlled_benchmark_scenarios.json \
+            --profile examples/openai-gpt-5.6-terra-profile.json \
+            --policy runtime-live-study-policy.json \
+            --output-dir "$OUTPUT_DIR" \
+            --audit-dir "$AUDIT_DIR" \
+            --allow-network
+
+      - name: Generate blinded reviewer assignments
+        if: ${{ success() }}
+        run: |
+          study_id=$(python -c 'import json; print(json.load(open("examples/study_config.json"))["study_id"])')
+          python -m intent_compiler.cli live-study-assign-reviewers \
+            --study-id "$study_id" \
+            --packets "$OUTPUT_DIR/blind-review-packets.jsonl" \
+            --policy runtime-live-study-policy.json \
+            --output "$OUTPUT_DIR/reviewer-assignments.json"
+
+      - name: Confirm publication remains blocked before independent review
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          set +e
+          python -m intent_compiler.cli live-study-publication-check \
+            --config examples/study_config.json \
+            --records "$OUTPUT_DIR/run-records.jsonl" \
+            --policy runtime-live-study-policy.json \
+            --scenarios examples/controlled_benchmark_scenarios.json \
+            --output "$OUTPUT_DIR/publication-check-before-review.json"
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Publication guard unexpectedly allowed a quality claim before blind reviews."
+            exit 1
+          fi
+
+      - name: Upload reviewer-safe packet
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-benchmark-reviewer-packet
+          path: |
+            live-study-output/preflight.json
+            live-study-output/blind-review-packets.jsonl
+            live-study-output/blind-review-template.csv
+            live-study-output/reviewer-assignments.json
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload private study control records
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-benchmark-private-controls
+          path: |
+            live-study-output/run-records.jsonl
+            live-study-output/private-blind-mapping.json
+            live-study-output/resume-result.json
+            live-study-output/publication-check-before-review.json
+            .intent-compiler-live-study/
+            runtime-live-study-policy.json
+          if-no-files-found: warn
+          retention-days: 14
