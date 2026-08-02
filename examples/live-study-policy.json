@@ -1,0 +1,16 @@
+{
+  "max_total_spend_usd": 5.0,
+  "reserve_per_run_usd": 0.2,
+  "max_runs": 100,
+  "minimum_reviews_per_output": 2,
+  "reviewer_ids": [
+    "reviewer-a",
+    "reviewer-b",
+    "reviewer-c"
+  ],
+  "assignment_seed": 20260802,
+  "require_exact_token_usage": true,
+  "require_zero_execution_errors": true,
+  "require_complete_blind_review": true,
+  "prohibit_quality_claims_for_mock": true
+}

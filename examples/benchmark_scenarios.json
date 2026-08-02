@@ -1,0 +1,42 @@
+[
+  {
+    "scenario_id": "network-vpn-migration",
+    "domain": "network_operations",
+    "objective": "Create an implementation-ready plan to migrate a production IPsec VPN from IKEv1 to IKEv2 with minimal service risk.",
+    "requirements": [
+      "Document current and target states",
+      "Identify dependencies and affected parties",
+      "Define a rollback plan",
+      "Define pre-change and post-change validation",
+      "Separate planning from execution authorization"
+    ],
+    "constraints": [
+      "Production-impacting actions require explicit approval",
+      "No live network changes may be executed by the benchmark"
+    ],
+    "authoritative_context": [
+      "The benchmark contains no live device state",
+      "All implementation details must remain proposals"
+    ]
+  },
+  {
+    "scenario_id": "software-feature-contract",
+    "domain": "software_development",
+    "objective": "Turn an ambiguous request for AI-assisted task planning into a bounded implementation contract for a coding agent.",
+    "requirements": [
+      "Define user value and non-goals",
+      "Specify data and authorization boundaries",
+      "Provide measurable acceptance criteria",
+      "Require tests and rollback guidance",
+      "Prevent model output from directly mutating canonical state"
+    ],
+    "constraints": [
+      "Use the smallest complete change",
+      "Do not assume a particular model provider"
+    ],
+    "authoritative_context": [
+      "Application business rules remain deterministic",
+      "The coding agent may only modify approved repository paths"
+    ]
+  }
+]

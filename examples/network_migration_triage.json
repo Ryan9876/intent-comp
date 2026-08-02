@@ -1,0 +1,9 @@
+{
+  "complexity": 2,
+  "consequence": 2,
+  "ambiguity": 1,
+  "reuse": 1,
+  "evidence_burden": 2,
+  "high_consequence_override": true,
+  "rationale": "Production network migration with multiple dependencies, rollback requirements, and authoritative state validation."
+}

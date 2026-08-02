@@ -1,0 +1,29 @@
+{
+  "objective_specification": {
+    "desired_outcome": "",
+    "primary_user": "",
+    "stakeholders": [],
+    "scope": [],
+    "non_goals": [],
+    "constraints": [],
+    "success_criteria": [],
+    "consequence_of_failure": "",
+    "material_unknowns": []
+  },
+  "execution_contract": {
+    "actor": "",
+    "action": "",
+    "exact_target": "",
+    "scope": [],
+    "prohibited_scope": [],
+    "required_authority": [],
+    "granted_authority": [],
+    "inputs": {},
+    "expected_outputs": [],
+    "acceptance_criteria": [],
+    "verification_checks": [],
+    "rollback": "",
+    "completion_evidence": [],
+    "stopping_conditions": []
+  }
+}
