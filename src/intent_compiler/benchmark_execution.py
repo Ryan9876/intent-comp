@@ -49,6 +49,9 @@ class BenchmarkExecutionRecord(StrictModel):
     provider_kind: Literal["mock", "live"]
     measured_at: str
     calls: int = Field(ge=0)
+    provider_responses: int = Field(default=0, ge=0)
+    structured_output_failures: int = Field(default=0, ge=0)
+    usage_complete: bool = True
     latency_seconds: float = Field(ge=0)
     input_chars: int = Field(ge=0)
     output_chars: int = Field(ge=0)
@@ -80,6 +83,10 @@ class MeasuredBenchmarkRunner:
         start_output_tokens = self.client.output_tokens
         start_total_tokens = self.client.total_tokens
         start_cost = self.client.estimated_cost_usd
+        start_provider_responses = self.client.provider_responses
+        start_structured_failures = self.client.structured_output_failures
+        start_usage_missing = self.client.usage_missing_calls
+        start_cost_missing = self.client.cost_missing_calls
         started = time.perf_counter()
         errors: list[str] = []
         final: BenchmarkOutput | None = None
@@ -157,6 +164,12 @@ class MeasuredBenchmarkRunner:
             addressed = {item.strip().casefold() for item in final.requirements_addressed}
             requirement_coverage = round(100 * len(expected & addressed) / len(expected), 3)
             traceability_count = len(set(final.traceability_refs))
+        provider_responses = max(self.client.provider_responses - start_provider_responses, 0)
+        structured_failures = max(
+            self.client.structured_output_failures - start_structured_failures, 0
+        )
+        usage_complete = self.client.usage_missing_calls == start_usage_missing
+        provider_cost_complete = self.client.cost_missing_calls == start_cost_missing
         return BenchmarkExecutionRecord(
             scenario_id=scenario.scenario_id,
             domain=scenario.domain,
@@ -166,16 +179,23 @@ class MeasuredBenchmarkRunner:
             provider_kind="mock" if self.provider == "mock" else "live",
             measured_at=utc_now().isoformat(),
             calls=max(self.client.calls - start_calls, 0),
+            provider_responses=provider_responses,
+            structured_output_failures=structured_failures,
+            usage_complete=usage_complete,
             latency_seconds=elapsed,
             input_chars=max(self.client.input_chars - start_input, 0),
             output_chars=max(self.client.output_chars - start_output, 0),
             schema_valid=final is not None,
             requirement_coverage=requirement_coverage,
             traceability_reference_count=traceability_count,
-            input_tokens=(self.client.input_tokens - start_input_tokens) if self.client.usage_complete else None,
-            output_tokens=(self.client.output_tokens - start_output_tokens) if self.client.usage_complete else None,
-            total_tokens=(self.client.total_tokens - start_total_tokens) if self.client.usage_complete else None,
-            estimated_cost_usd=round(self.client.estimated_cost_usd - start_cost, 8) if self.client.cost_complete else None,
+            input_tokens=(self.client.input_tokens - start_input_tokens) if usage_complete else None,
+            output_tokens=(self.client.output_tokens - start_output_tokens) if usage_complete else None,
+            total_tokens=(self.client.total_tokens - start_total_tokens) if usage_complete else None,
+            estimated_cost_usd=(
+                round(self.client.estimated_cost_usd - start_cost, 8)
+                if provider_cost_complete
+                else None
+            ),
             output=final,
             errors=errors,
         )
@@ -205,6 +225,7 @@ class MeasuredBenchmarkRunner:
                 "scenario_id": scenario.scenario_id,
                 "scenario_requirements": scenario.requirements,
             },
+            max_output_tokens=4000,
         )
         response = self.client.generate(request)
         if response.parsed is None:
@@ -235,6 +256,7 @@ class MeasuredBenchmarkRunner:
                 "scenario_id": scenario.scenario_id,
                 "scenario_requirements": scenario.requirements,
             },
+            max_output_tokens=10_000,
         )
         response = self.client.generate(request)
         if response.parsed is None:

@@ -147,3 +147,75 @@ def test_openai_adapter_builds_responses_api_structured_output_request():
     assert captured["authorization"] == "Bearer secret-test-key"
     assert captured["body"]["text"]["format"]["type"] == "json_schema"
     assert captured["body"]["text"]["format"]["strict"] is True
+
+
+def test_structured_retry_preserves_incomplete_response_usage_and_audit():
+    audits = []
+    requests = []
+    responses = [
+        {
+            "id": "resp_incomplete",
+            "status": "incomplete",
+            "incomplete_details": {"reason": "max_output_tokens"},
+            "output_text": '{"answer": "truncated"',
+            "usage": {"input_tokens": 10, "output_tokens": 20, "total_tokens": 30},
+        },
+        {
+            "id": "resp_complete",
+            "status": "completed",
+            "output_text": '{"answer": "complete"}',
+            "usage": {"input_tokens": 11, "output_tokens": 21, "total_tokens": 32},
+        },
+    ]
+
+    def transport(request: urllib.request.Request, timeout: float):
+        requests.append(json.loads(request.data.decode("utf-8")))
+        return responses.pop(0)
+
+    provider = OpenAIResponsesAdapter(api_key="secret-test-key", transport=transport)
+    client = GovernedLLMClient(
+        provider,
+        LLMPolicy(
+            allowed_providers=["openai"],
+            allowed_models={"openai": ["test-model"]},
+            network_access=True,
+            permitted_data_classifications=["internal"],
+            require_structured_output=True,
+            structured_output_retries=1,
+            budget=LLMBudget(max_calls=4, max_input_chars=50_000, max_output_chars=20_000),
+        ),
+        audit_sink=audits.append,
+    )
+    request = LLMRequest(
+        purpose="test_retry",
+        provider="openai",
+        model="test-model",
+        system_instructions="Return JSON.",
+        user_content="input",
+        output_schema_name="test",
+        output_schema={
+            "type": "object",
+            "properties": {"answer": {"type": "string"}},
+            "required": ["answer"],
+            "additionalProperties": False,
+        },
+        max_output_tokens=100,
+    )
+
+    response = client.generate(request)
+
+    assert response.parsed == {"answer": "complete"}
+    assert client.calls == 2
+    assert client.provider_responses == 2
+    assert client.structured_output_failures == 1
+    assert client.input_tokens == 21
+    assert client.output_tokens == 41
+    assert client.total_tokens == 62
+    assert client.usage_complete is True
+    assert requests[0]["max_output_tokens"] == 100
+    assert requests[1]["max_output_tokens"] == 200
+    assert audits[0].status == "invalid_structured_output"
+    assert audits[0].incomplete_reason == "max_output_tokens"
+    assert audits[0].usage.total_tokens == 30
+    assert audits[1].status == "completed"
+    assert audits[1].structured_output_valid is True

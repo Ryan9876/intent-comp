@@ -20,6 +20,7 @@ from .benchmark_study import (
     StudyRunRecord,
     build_schedule,
 )
+from .errors import ValidationFailure
 from .models import StrictModel, new_id, utc_now
 
 
@@ -94,9 +95,13 @@ class ResumeResult(StrictModel):
     total_schedule_entries: int = Field(ge=0)
     prior_records: int = Field(ge=0)
     new_records: int = Field(ge=0)
+    retried_failed: int = Field(default=0, ge=0)
     skipped_completed: int = Field(ge=0)
+    remaining_failures: int = Field(default=0, ge=0)
     stopped_for_budget: bool = False
     cumulative_cost_usd: float = Field(ge=0)
+    cumulative_cost_complete: bool = True
+    review_packet_ready: bool = False
     records: list[StudyRunRecord]
 
 
@@ -115,8 +120,10 @@ class PublicationGuardReport(StrictModel):
     completed_runs: int = Field(ge=0)
     provider_kind: str
     total_cost_usd: float = Field(ge=0)
+    total_cost_is_lower_bound: bool = False
     spend_limit_usd: float = Field(gt=0)
     execution_errors: int = Field(ge=0)
+    usage_incomplete_records: int = Field(default=0, ge=0)
     outputs_with_sufficient_reviews: int = Field(ge=0)
     outputs_requiring_reviews: int = Field(ge=0)
     exact_usage_complete: bool
@@ -134,8 +141,40 @@ def sha256_file(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+def _record_usage_complete(record: StudyRunRecord) -> bool:
+    if record.usage_complete is not None:
+        return record.usage_complete
+    return (
+        not record.execution.errors
+        and record.execution.usage_complete
+        and record.input_tokens is not None
+        and record.output_tokens is not None
+        and record.total_tokens is not None
+    )
+
+
+def _record_cost_complete(record: StudyRunRecord) -> bool:
+    if record.cost_complete is not None:
+        return record.cost_complete
+    return _record_usage_complete(record) and not record.execution.errors and record.cost_usd is not None
+
+
+def _record_known_cost(record: StudyRunRecord) -> float:
+    return (record.historical_cost_usd or 0.0) + (record.cost_usd or 0.0)
+
+
 def _known_cost(records: Iterable[StudyRunRecord]) -> float:
-    return round(sum(record.cost_usd or 0.0 for record in records), 8)
+    return round(sum(_record_known_cost(record) for record in records), 8)
+
+
+def is_complete_study_record(record: StudyRunRecord) -> bool:
+    return (
+        record.execution.schema_valid
+        and record.execution.output is not None
+        and not record.execution.errors
+        and _record_usage_complete(record)
+        and _record_cost_complete(record)
+    )
 
 
 def preflight_live_study(
@@ -152,11 +191,15 @@ def preflight_live_study(
     records = list(existing_records)
     credential = bool(os.getenv("OPENAI_API_KEY")) if credential_configured is None else credential_configured
     schedule = build_schedule(config, scenarios)
-    completed_ids = {record.blind_output_id for record in records}
+    latest_by_id = {record.blind_output_id: record for record in records}
+    completed_ids = {
+        blind_id for blind_id, record in latest_by_id.items() if is_complete_study_record(record)
+    }
     remaining = [entry for entry in schedule if entry.blind_output_id not in completed_ids]
     existing_cost = _known_cost(records)
     reserved = round(len(remaining) * policy.reserve_per_run_usd, 8)
     projected = round(existing_cost + reserved, 8)
+    incomplete_cost_records = sum(not _record_cost_complete(record) for record in records)
     blockers: list[str] = []
     warnings: list[str] = []
     if profile.provider != "openai":
@@ -167,6 +210,11 @@ def preflight_live_study(
         blockers.append("Network access is not explicitly allowed.")
     if len(schedule) > policy.max_runs:
         blockers.append(f"Scheduled runs {len(schedule)} exceed policy maximum {policy.max_runs}.")
+    if incomplete_cost_records:
+        blockers.append(
+            f"{incomplete_cost_records} existing records have incomplete historical token or cost usage; "
+            "start a fresh study or reconcile provider billing before resuming."
+        )
     if projected > policy.max_total_spend_usd:
         blockers.append(
             f"Reserved maximum ${projected:.2f} exceeds spend limit ${policy.max_total_spend_usd:.2f}."
@@ -177,6 +225,9 @@ def preflight_live_study(
         blockers.append("Official model and pricing sources are required.")
     if records and any(record.execution.provider_kind != "live" for record in records):
         warnings.append("Existing records include non-live runs; they cannot support live quality claims.")
+    failed_existing = sum(not is_complete_study_record(record) for record in latest_by_id.values())
+    if failed_existing and not incomplete_cost_records:
+        warnings.append(f"{failed_existing} failed or incomplete outputs are eligible for bounded retry.")
     return PreflightReport(
         study_id=config.study_id,
         provider=profile.provider,
@@ -206,22 +257,37 @@ def run_resumable_study(
     existing_records: Iterable[StudyRunRecord] = (),
 ) -> ResumeResult:
     prior = list(existing_records)
+    if prior and any(not _record_cost_complete(record) for record in prior):
+        raise ValidationFailure(
+            "Cannot resume records with incomplete historical token or cost usage; start a fresh study."
+        )
     by_blind_id = {record.blind_output_id: record for record in prior}
     scenario_by_id = {scenario.scenario_id: scenario for scenario in scenarios}
     schedule = build_schedule(config, scenarios)
     new_records: list[StudyRunRecord] = []
     stopped = False
     cumulative_cost = _known_cost(prior)
+    skipped_completed = 0
+    retried_failed = 0
     for entry in schedule:
-        if entry.blind_output_id in by_blind_id:
+        previous = by_blind_id.get(entry.blind_output_id)
+        if previous is not None and is_complete_study_record(previous):
+            skipped_completed += 1
             continue
         if cumulative_cost + policy.reserve_per_run_usd > policy.max_total_spend_usd:
             stopped = True
             break
+        if previous is not None:
+            retried_failed += 1
         execution = runner.run(scenario_by_id[entry.scenario_id], entry.approach)
         cost = pricing.estimate(execution.input_tokens, execution.output_tokens)
         if cost is None:
             cost = execution.estimated_cost_usd
+        prior_known_cost = _record_known_cost(previous) if previous is not None else 0.0
+        prior_usage_complete = _record_usage_complete(previous) if previous is not None else True
+        prior_cost_complete = _record_cost_complete(previous) if previous is not None else True
+        attempt_usage_complete = execution.usage_complete and execution.input_tokens is not None and execution.output_tokens is not None
+        attempt_cost_complete = attempt_usage_complete and cost is not None
         record = StudyRunRecord(
             study_id=config.study_id,
             run_id=entry.run_id,
@@ -233,6 +299,10 @@ def run_resumable_study(
             output_tokens=execution.output_tokens,
             total_tokens=execution.total_tokens,
             cost_usd=cost,
+            historical_cost_usd=prior_known_cost,
+            attempt_count=(previous.attempt_count + 1) if previous is not None else 1,
+            usage_complete=prior_usage_complete and attempt_usage_complete,
+            cost_complete=prior_cost_complete and attempt_cost_complete,
             pricing_source=pricing.source,
         )
         new_records.append(record)
@@ -241,15 +311,25 @@ def run_resumable_study(
         if cumulative_cost > policy.max_total_spend_usd:
             stopped = True
             break
-    combined = [by_blind_id[key] for key in sorted(by_blind_id)]
+    combined = [
+        by_blind_id[entry.blind_output_id]
+        for entry in schedule
+        if entry.blind_output_id in by_blind_id
+    ]
+    remaining_failures = sum(not is_complete_study_record(record) for record in combined)
+    review_packet_ready = len(combined) == len(schedule) and remaining_failures == 0
     return ResumeResult(
         study_id=config.study_id,
         total_schedule_entries=len(schedule),
         prior_records=len(prior),
         new_records=len(new_records),
-        skipped_completed=len(prior),
+        retried_failed=retried_failed,
+        skipped_completed=skipped_completed,
+        remaining_failures=remaining_failures,
         stopped_for_budget=stopped,
         cumulative_cost_usd=cumulative_cost,
+        cumulative_cost_complete=all(_record_cost_complete(record) for record in combined),
+        review_packet_ready=review_packet_ready,
         records=combined,
     )
 
@@ -299,13 +379,10 @@ def publication_guard(
     provider_kind = next(iter(provider_kinds)) if len(provider_kinds) == 1 else "mixed"
     errors = sum(1 for record in records if record.execution.errors)
     total_cost = _known_cost(records)
-    exact_usage = all(
-        record.input_tokens is not None
-        and record.output_tokens is not None
-        and record.total_tokens is not None
-        and record.cost_usd is not None
-        for record in records
-    ) if records else False
+    usage_incomplete = sum(
+        1 for record in records if not (_record_usage_complete(record) and _record_cost_complete(record))
+    )
+    exact_usage = bool(records) and usage_incomplete == 0
     review_counts = Counter(review.blind_output_id for review in reviews)
     required_ids = {record.blind_output_id for record in records}
     sufficient = sum(
@@ -320,8 +397,11 @@ def publication_guard(
     if policy.require_zero_execution_errors and errors:
         blockers.append(f"{errors} run records contain execution errors.")
     if policy.require_exact_token_usage and not exact_usage:
-        blockers.append("Exact token and cost usage is incomplete.")
-    if total_cost > policy.max_total_spend_usd:
+        blockers.append(
+            f"Exact token and cost usage is incomplete for {usage_incomplete} run records; "
+            "reported cost is a lower bound."
+        )
+    if exact_usage and total_cost > policy.max_total_spend_usd:
         blockers.append("Recorded study cost exceeds the approved spend limit.")
     if policy.require_complete_blind_review and sufficient != len(required_ids):
         blockers.append(
@@ -337,8 +417,10 @@ def publication_guard(
         completed_runs=len(records),
         provider_kind=provider_kind,
         total_cost_usd=total_cost,
+        total_cost_is_lower_bound=not exact_usage,
         spend_limit_usd=policy.max_total_spend_usd,
         execution_errors=errors,
+        usage_incomplete_records=usage_incomplete,
         outputs_with_sufficient_reviews=sufficient,
         outputs_requiring_reviews=len(required_ids),
         exact_usage_complete=exact_usage,

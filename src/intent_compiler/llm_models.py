@@ -9,7 +9,7 @@ from .models import StrictModel, new_id, utc_now
 
 
 DataClassification = Literal["public", "internal", "confidential", "restricted"]
-LLMResponseStatus = Literal["completed", "refused", "failed"]
+LLMResponseStatus = Literal["completed", "refused", "failed", "incomplete"]
 
 
 class LLMBudget(StrictModel):
@@ -27,6 +27,9 @@ class LLMPolicy(StrictModel):
         default_factory=lambda: ["public", "internal"]
     )
     require_structured_output: bool = True
+    structured_output_retries: int = Field(default=1, ge=0, le=3)
+    structured_output_retry_token_multiplier: float = Field(default=2.0, ge=1.0, le=4.0)
+    structured_output_retry_max_tokens: int = Field(default=16_000, ge=1, le=100_000)
     record_prompt_content: bool = False
     timeout_seconds: float = Field(default=60.0, gt=0, le=600)
     max_retries: int = Field(default=2, ge=0, le=8)
@@ -98,6 +101,10 @@ class LLMAuditRecord(StrictModel):
     output_sha256: str | None = None
     prompt_content_recorded: bool = False
     status: str
+    provider_status: str | None = None
+    structured_output_valid: bool | None = None
+    validation_error: str | None = None
+    incomplete_reason: str | None = None
     latency_ms: float | None = None
     attempts: int = 0
     input_chars: int = Field(ge=0)
