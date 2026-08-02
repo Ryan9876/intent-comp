@@ -4,47 +4,49 @@
 
 **PASS WITH LIVE-RUN AND HUMAN-REVIEW LIMITATIONS**
 
-The package is a live-study release candidate. Its control and packaging paths were tested locally. No live OpenAI request was sent because `OPENAI_API_KEY` is not configured, and no independent human reviews were performed.
+## Repository validation
 
-## Automated validation
+- The complete source tree is committed to `agent/publish-intent-compiler-v0.4.0`.
+- GitHub Actions installed the package and passed all 30 automated tests on Python 3.11, 3.12, and 3.13.
+- The repository contains no API key value or private-key material.
+- Generated builds, caches, live-study records, and private blind mappings are excluded from source control.
 
-- 30 automated tests passed.
-- Python source compilation passed.
-- Credential-free live-study preflight correctly returned blocked status.
-- Preflight recorded `content_sent: false`.
-- The selected 24-run study fits the $5.00 study cap using a $0.20 conservative reserve per run ($4.80 reserved).
-- Reviewer assignment produced 48 assignments: two reviewers for each of 24 blinded outputs.
-- Reviewer load was exactly balanced across three reviewer IDs (16 assignments each).
-- Publication guard correctly rejected the mock study because it was not live, lacked exact token/cost usage, and had no independent reviews.
-- The pre-existing mock controlled-study records remained complete: 24 runs with no execution errors.
+## GitHub live-benchmark controls
 
-## Approved example model profile
+The draft branch now includes `.github/workflows/live-benchmark.yml` with the following controls:
 
-- Provider: OpenAI
-- Model: GPT-5.6 Terra
-- API model ID: `gpt-5.6-terra`
-- Price effective date recorded: 2026-08-02
-- Input: $2.00 per 1M tokens
-- Cached input: $0.20 per 1M tokens
-- Output: $12.00 per 1M tokens
+- manual `workflow_dispatch` only;
+- separate no-content preflight and live execution jobs;
+- exact `RUN-LIVE-STUDY` confirmation for execution;
+- requested spend may lower but cannot exceed the repository policy limit;
+- single-study concurrency;
+- read-only repository permissions;
+- protected `live-benchmark` environment for the execution job;
+- reviewer-safe and private-control artifacts uploaded separately;
+- publication guard expected to reject comparative quality claims before independent review.
 
-The model and pricing values were taken from official OpenAI pages on 2026-08-02. They must be rechecked before a live run.
+## Model profile
 
-## Live boundary
+The approved GPT-5.6 Terra profile was corrected to the official rates verified on August 2, 2026:
 
-Not performed:
+- input: $2.50 per million tokens;
+- cached input: $0.25 per million tokens;
+- output: $15.00 per million tokens.
 
-- no live API calls;
-- no live token or cost records;
-- no independent blind reviews;
-- no quality comparison;
-- no methodology-superiority conclusion.
+The profile must be reverified against official sources before each live study because model availability and pricing can change.
 
-The actual preflight is blocked by two conditions:
+## Not executed
 
-1. `OPENAI_API_KEY` is not configured.
-2. Network access was not explicitly allowed.
+No live OpenAI API request was made.
 
-## Publication boundary
+The following remain externally required:
 
-The package prevents a quality claim until all scheduled records are live and complete, exact token/cost data are present, the spend cap is respected, execution errors are zero, and every output has at least two independent blind reviews.
+1. Add `OPENAI_API_KEY` as a GitHub Actions repository secret.
+2. Create a protected GitHub environment named `live-benchmark` and configure the required reviewer or approval policy.
+3. Merge the draft pull request so the manual workflow is available from the default branch.
+4. Run preflight and inspect its artifact before authorizing execution.
+5. Complete independent blinded reviews before interpreting comparative quality.
+
+## Evidence boundary
+
+A successful live run would establish only that the selected model completed the configured scenarios under the recorded workflow and budget. Methodology superiority cannot be claimed unless the controlled study is complete, usage and costs are exact, independent blinded reviews are complete, and the publication guard passes. Any conclusion remains limited to the tested scenarios, model, prompts, policy, reviewers, and study period.
