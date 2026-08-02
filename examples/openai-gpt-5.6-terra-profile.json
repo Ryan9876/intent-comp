@@ -7,11 +7,11 @@
     "strict structured outputs",
     "no external tool execution"
   ],
-  "input_usd_per_million_tokens": 2.0,
-  "output_usd_per_million_tokens": 12.0,
-  "cached_input_usd_per_million_tokens": 0.2,
+  "input_usd_per_million_tokens": 2.5,
+  "output_usd_per_million_tokens": 15.0,
+  "cached_input_usd_per_million_tokens": 0.25,
   "effective_date": "2026-08-02",
   "model_source": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-  "pricing_source": "https://openai.com/api/",
-  "approval_basis": "Balances intelligence and cost for a fixed, structured-output benchmark; selected from the official OpenAI model catalog on 2026-08-02."
+  "pricing_source": "https://openai.com/api/pricing/",
+  "approval_basis": "Balances intelligence and cost for a fixed, structured-output benchmark; model availability and pricing were verified against official OpenAI sources on 2026-08-02."
 }
