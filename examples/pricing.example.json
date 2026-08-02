@@ -1,0 +1,8 @@
+{
+  "provider": "openai",
+  "model": "REPLACE_WITH_APPROVED_MODEL",
+  "input_usd_per_million_tokens": 0,
+  "output_usd_per_million_tokens": 0,
+  "effective_date": "REPLACE_WITH_DATE",
+  "source": "REPLACE_WITH_CURRENT_OFFICIAL_PRICING_SOURCE"
+}

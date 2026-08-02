@@ -1,0 +1,122 @@
+[
+  {
+    "scenario_id": "network-vpn-migration",
+    "domain": "network_operations",
+    "objective": "Create an implementation-ready plan to migrate a production IPsec VPN from IKEv1 to IKEv2 with minimal service risk.",
+    "requirements": [
+      "Document current and target states",
+      "Identify dependencies and affected parties",
+      "Define a rollback plan",
+      "Define pre-change and post-change validation",
+      "Separate planning from execution authorization"
+    ],
+    "constraints": [
+      "Production-impacting actions require explicit approval",
+      "No live network changes may be executed by the benchmark"
+    ],
+    "authoritative_context": [
+      "The benchmark contains no live device state",
+      "All implementation details must remain proposals"
+    ]
+  },
+  {
+    "scenario_id": "software-feature-contract",
+    "domain": "software_development",
+    "objective": "Turn an ambiguous request for AI-assisted task planning into a bounded implementation contract for a coding agent.",
+    "requirements": [
+      "Define user value and non-goals",
+      "Specify data and authorization boundaries",
+      "Provide measurable acceptance criteria",
+      "Require tests and rollback guidance",
+      "Prevent model output from directly mutating canonical state"
+    ],
+    "constraints": [
+      "Use the smallest complete change",
+      "Do not assume a particular model provider"
+    ],
+    "authoritative_context": [
+      "Application business rules remain deterministic",
+      "The coding agent may only modify approved repository paths"
+    ]
+  },
+  {
+    "scenario_id": "leadership-delegation",
+    "domain": "leadership",
+    "objective": "Convert an unclear cross-team infrastructure initiative into accountable delegation without the manager absorbing team ownership.",
+    "requirements": [
+      "Define the outcome and non-goals",
+      "Assign decision and execution ownership",
+      "Define checkpoints and escalation triggers",
+      "Define completion evidence",
+      "Identify assumptions that require stakeholder confirmation"
+    ],
+    "constraints": [
+      "The manager retains accountability but should not perform subordinate work",
+      "No employee motives may be inferred"
+    ],
+    "authoritative_context": [
+      "The initiative crosses engineering and operations teams",
+      "Ownership is currently ambiguous"
+    ]
+  },
+  {
+    "scenario_id": "research-conflicting-sources",
+    "domain": "research",
+    "objective": "Produce a decision brief from conflicting technical sources while preserving uncertainty and provenance.",
+    "requirements": [
+      "Rank source authority",
+      "Identify exact contradictions",
+      "Separate findings from inference",
+      "State unresolved uncertainty",
+      "Recommend the next evidence-gathering action"
+    ],
+    "constraints": [
+      "Do not manufacture consensus",
+      "Do not cite sources not supplied in the scenario"
+    ],
+    "authoritative_context": [
+      "Two primary sources disagree on a material implementation constraint",
+      "A secondary source summarizes both but is outdated"
+    ]
+  },
+  {
+    "scenario_id": "governance-control-design",
+    "domain": "governance",
+    "objective": "Translate a policy requiring approved production changes into practical technical and operating controls.",
+    "requirements": [
+      "Define actor-action-target authorization",
+      "Define immutable evidence",
+      "Define pre-change validation and rollback",
+      "Define post-change readback",
+      "Define exception and escalation handling"
+    ],
+    "constraints": [
+      "Planning cannot authorize execution",
+      "Controls must be proportionate to consequence"
+    ],
+    "authoritative_context": [
+      "The organization already has identity and change-ticket systems",
+      "The policy text does not define implementation technology"
+    ]
+  },
+  {
+    "scenario_id": "incident-response-compressed",
+    "domain": "incident_response",
+    "objective": "Create a time-bounded response plan for a simulated service outage without allowing documentation overhead to delay containment.",
+    "requirements": [
+      "Separate facts from hypotheses",
+      "Define containment actions and authority",
+      "Define communication cadence",
+      "Define verification of recovery",
+      "Define post-incident evidence capture"
+    ],
+    "constraints": [
+      "The initial response plan must be usable within ten minutes",
+      "No destructive action may be assumed authorized"
+    ],
+    "authoritative_context": [
+      "The incident is simulated",
+      "Monitoring indicates customer impact but the root cause is unknown"
+    ]
+  }
+]

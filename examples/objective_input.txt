@@ -1,0 +1,1 @@
+Create a bounded, verifiable plan for migrating a production VPN from IKEv1 to IKEv2. Do not execute changes. Identify dependencies, approval requirements, rollback, and validation.
