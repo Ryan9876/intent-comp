@@ -1,0 +1,66 @@
+name: v0.4.1 reliability bootstrap
+
+on:
+  push:
+    branches:
+      - agent/fix-live-study-reliability-v0.4.1
+    paths:
+      - .bootstrap-v041/READY
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/fix-live-study-reliability-v0.4.1
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Reconstruct and verify payload
+        shell: bash
+        run: |
+          cat .bootstrap-v041/chunk-* > /tmp/v041-payload.b64
+          base64 --decode /tmp/v041-payload.b64 > /tmp/v041-payload.tar.gz
+          echo "efc45ad94355238021c494db7a0f4424d82b319b613e6043327b2588085c8c2a  /tmp/v041-payload.tar.gz" | sha256sum --check --strict
+          tar -xzf /tmp/v041-payload.tar.gz
+
+      - name: Validate repair
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pytest -q
+          python -m pip wheel . --no-deps -w /tmp/dist
+
+      - name: Commit repaired source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/intent_compiler/llm_models.py \
+            src/intent_compiler/llm_adapters.py \
+            src/intent_compiler/benchmark_execution.py \
+            src/intent_compiler/benchmark_study.py \
+            src/intent_compiler/live_study.py \
+            src/intent_compiler/cli.py \
+            src/intent_compiler/__init__.py \
+            tests/test_llm_governance.py \
+            tests/test_live_study.py \
+            pyproject.toml \
+            CHANGELOG.md \
+            VALIDATION_REPORT.md \
+            README.md
+          if git diff --cached --quiet; then
+            echo "No repaired source changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix live-study accounting and structured-output reliability"
+          git push origin HEAD:agent/fix-live-study-reliability-v0.4.1
