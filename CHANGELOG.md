@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Added a manual GitHub Actions workflow for guarded live benchmarking.
+- Separated no-content preflight from protected live execution.
+- Added exact run confirmation, concurrency control, spend-cap enforcement, and artifact separation.
+- Added GitHub setup and operating instructions for repository secrets, protected environments, review packets, and private control records.
+- Corrected the GPT-5.6 Terra profile to the official August 2, 2026 rates: $2.50 input, $0.25 cached input, and $15.00 output per million tokens.
+
 ## 0.4.0 — 2026-08-02
 
 - Added an approved live-model profile for GPT-5.6 Terra with dated official pricing.
