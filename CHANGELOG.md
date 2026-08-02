@@ -1,12 +1,15 @@
 # Changelog
 
-## Unreleased
+## 0.4.1 — Live-study reliability repair
 
-- Added a manual GitHub Actions workflow for guarded live benchmarking.
-- Separated no-content preflight from protected live execution.
-- Added exact run confirmation, concurrency control, spend-cap enforcement, and artifact separation.
-- Added GitHub setup and operating instructions for repository secrets, protected environments, review packets, and private control records.
-- Corrected the GPT-5.6 Terra profile to the official August 2, 2026 rates: $2.50 input, $0.25 cached input, and $15.00 output per million tokens.
+- Preserve provider response status, token usage, and audit evidence before structured-output validation.
+- Detect incomplete responses and retry invalid structured output once with a bounded token increase.
+- Distinguish provider completion, schema validity, usage completeness, and execution errors.
+- Prevent legacy records with incomplete historical billing evidence from being resumed as exact-cost studies.
+- Retry failed outputs while preserving prior known attempt cost for v0.4.1-compatible records.
+- Withhold reviewer packets until every scheduled output is valid and usage-complete.
+- Mark incomplete study cost as a lower bound in the publication guard.
+- Include hidden audit records in private GitHub Actions artifacts and support optional prior-run artifact input.
 
 ## 0.4.0 — 2026-08-02
 

@@ -27,9 +27,9 @@ def profile():
         display_name="GPT-5.6 Terra",
         api_model_id="gpt-5.6-terra",
         approved_for=["controlled benchmark"],
-        input_usd_per_million_tokens=2.5,
-        output_usd_per_million_tokens=15.0,
-        cached_input_usd_per_million_tokens=0.25,
+        input_usd_per_million_tokens=2.0,
+        output_usd_per_million_tokens=12.0,
+        cached_input_usd_per_million_tokens=0.2,
         effective_date="2026-08-02",
         model_source="official model page",
         pricing_source="official pricing page",
@@ -194,3 +194,129 @@ def test_publication_guard_blocks_mock_and_missing_reviews():
     assert not report.quality_claim_allowed
     assert any("live-provider" in item for item in report.blockers)
     assert any("blind reviews" in item for item in report.blockers)
+
+
+def test_preflight_blocks_resume_when_historical_usage_is_incomplete(tmp_path: Path):
+    scenario_path = tmp_path / "scenarios.json"
+    scenario_path.write_text("[]", encoding="utf-8")
+    config = StudyConfig(study_id="resume-blocked")
+    entry = build_schedule(config, scenarios())[0]
+    execution = MeasuredBenchmarkRunner(mock_client(), "mock", "mock-governed-v1").run(
+        scenarios()[0], entry.approach
+    ).model_copy(
+        update={
+            "provider": "openai",
+            "model": "gpt-5.6-terra",
+            "provider_kind": "live",
+            "schema_valid": False,
+            "output": None,
+            "errors": ["ValidationFailure: invalid JSON"],
+        }
+    )
+    prior = StudyRunRecord(
+        study_id=config.study_id,
+        run_id=entry.run_id,
+        repeat_index=entry.repeat_index,
+        order_position=entry.order_position,
+        blind_output_id=entry.blind_output_id,
+        execution=execution,
+        input_tokens=0,
+        output_tokens=0,
+        total_tokens=0,
+        cost_usd=0,
+        pricing_source="test",
+    )
+    report = preflight_live_study(
+        config,
+        scenarios(),
+        scenario_path,
+        profile(),
+        policy(),
+        credential_configured=True,
+        network_allowed=True,
+        existing_records=[prior],
+    )
+    assert report.ready_to_run is False
+    assert report.completed_runs == 0
+    assert report.remaining_runs == 4
+    assert any("incomplete historical token or cost usage" in item for item in report.blockers)
+
+
+def test_resumable_runner_retries_failed_record_and_preserves_prior_cost():
+    config = StudyConfig(study_id="retry-test")
+    schedule = build_schedule(config, scenarios())
+    entry = schedule[0]
+    failed_execution = MeasuredBenchmarkRunner(mock_client(), "mock", "mock-governed-v1").run(
+        scenarios()[0], entry.approach
+    ).model_copy(update={"schema_valid": False, "output": None, "errors": ["invalid JSON"]})
+    prior = StudyRunRecord(
+        study_id=config.study_id,
+        run_id=entry.run_id,
+        repeat_index=entry.repeat_index,
+        order_position=entry.order_position,
+        blind_output_id=entry.blind_output_id,
+        execution=failed_execution,
+        input_tokens=0,
+        output_tokens=0,
+        total_tokens=0,
+        cost_usd=0.10,
+        usage_complete=True,
+        cost_complete=True,
+        pricing_source="test",
+    )
+
+    result = run_resumable_study(
+        config,
+        scenarios(),
+        MeasuredBenchmarkRunner(mock_client(), "mock", "mock-governed-v1"),
+        profile().pricing(),
+        policy(),
+        [prior],
+    )
+
+    replacement = next(record for record in result.records if record.blind_output_id == entry.blind_output_id)
+    assert result.retried_failed == 1
+    assert result.skipped_completed == 0
+    assert result.remaining_failures == 0
+    assert result.review_packet_ready is True
+    assert result.cumulative_cost_usd == 0.10
+    assert replacement.attempt_count == 2
+    assert replacement.historical_cost_usd == 0.10
+    assert replacement.execution.schema_valid is True
+
+
+def test_publication_guard_marks_failed_legacy_usage_as_lower_bound():
+    config = StudyConfig(study_id="legacy-usage")
+    entry = build_schedule(config, scenarios())[0]
+    execution = MeasuredBenchmarkRunner(mock_client(), "mock", "mock-governed-v1").run(
+        scenarios()[0], entry.approach
+    ).model_copy(
+        update={
+            "provider": "openai",
+            "model": "gpt-5.6-terra",
+            "provider_kind": "live",
+            "schema_valid": False,
+            "output": None,
+            "errors": ["ValidationFailure: invalid JSON"],
+        }
+    )
+    record = StudyRunRecord(
+        study_id=config.study_id,
+        run_id=entry.run_id,
+        repeat_index=entry.repeat_index,
+        order_position=entry.order_position,
+        blind_output_id=entry.blind_output_id,
+        execution=execution,
+        input_tokens=0,
+        output_tokens=0,
+        total_tokens=0,
+        cost_usd=0,
+        pricing_source="test",
+    )
+
+    report = publication_guard(config, [record], [], policy(), expected_scenarios=1)
+
+    assert report.exact_usage_complete is False
+    assert report.total_cost_is_lower_bound is True
+    assert report.usage_incomplete_records == 1
+    assert any("reported cost is a lower bound" in item for item in report.blockers)

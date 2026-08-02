@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intent-compiler"
-version = "0.4.0"
+version = "0.4.1"
 description = "A live-study release candidate and governed LLM reference orchestrator for the Intent Compilation Methodology."
 readme = "README.md"
 requires-python = ">=3.11"

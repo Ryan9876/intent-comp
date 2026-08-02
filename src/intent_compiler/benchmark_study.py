@@ -108,6 +108,10 @@ class StudyRunRecord(StrictModel):
     output_tokens: int | None = Field(default=None, ge=0)
     total_tokens: int | None = Field(default=None, ge=0)
     cost_usd: float | None = Field(default=None, ge=0)
+    historical_cost_usd: float = Field(default=0.0, ge=0)
+    attempt_count: int = Field(default=1, ge=1)
+    usage_complete: bool | None = None
+    cost_complete: bool | None = None
     pricing_source: str | None = None
 
 
@@ -255,6 +259,8 @@ def run_study(
                 output_tokens=output_tokens,
                 total_tokens=total_tokens,
                 cost_usd=cost,
+                usage_complete=execution.usage_complete,
+                cost_complete=execution.usage_complete and cost is not None,
                 pricing_source=pricing.source if pricing else None,
             )
         )

@@ -352,10 +352,21 @@ def main(argv: list[str] | None = None) -> int:
         runner = MeasuredBenchmarkRunner(client, profile.provider, profile.api_model_id)
         result = run_resumable_study(config, scenarios, runner, profile.pricing(), policy, existing)
         write_jsonl(result.records, output_dir / "run-records.jsonl")
-        packets, mapping = create_blind_packets(result.records, scenarios)
-        write_jsonl(packets, output_dir / "blind-review-packets.jsonl")
-        write_mapping(mapping, output_dir / "private-blind-mapping.json")
-        write_review_template(config.study_id, packets, output_dir / "blind-review-template.csv")
+        if result.review_packet_ready:
+            packets, mapping = create_blind_packets(result.records, scenarios)
+            write_jsonl(packets, output_dir / "blind-review-packets.jsonl")
+            write_mapping(mapping, output_dir / "private-blind-mapping.json")
+            write_review_template(config.study_id, packets, output_dir / "blind-review-template.csv")
+        else:
+            for stale_name in [
+                "blind-review-packets.jsonl",
+                "private-blind-mapping.json",
+                "blind-review-template.csv",
+                "reviewer-assignments.json",
+            ]:
+                stale = output_dir / stale_name
+                if stale.exists():
+                    stale.unlink()
         write_json(result, output_dir / "resume-result.json")
         print(result.model_dump_json(indent=2))
         return 0 if not result.stopped_for_budget else 3

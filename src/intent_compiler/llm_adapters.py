@@ -9,10 +9,9 @@ import urllib.request
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from pydantic import ValidationError
-
 from .errors import AuthorizationFailure, IntentCompilerError, ValidationFailure
 from .llm_models import LLMAuditRecord, LLMPolicy, LLMRequest, LLMResponse, LLMUsage
+from .models import new_id
 
 
 class LLMAdapterError(IntentCompilerError):
@@ -21,6 +20,14 @@ class LLMAdapterError(IntentCompilerError):
 
 class LLMBudgetExceeded(LLMAdapterError):
     pass
+
+
+class LLMStructuredOutputError(LLMAdapterError):
+    """Raised after a provider response is recorded but cannot satisfy the schema contract."""
+
+    def __init__(self, message: str, response: LLMResponse) -> None:
+        super().__init__(message)
+        self.response = response
 
 
 class LLMProvider(Protocol):
@@ -34,6 +41,11 @@ def _sha256(text: str) -> str:
 
 
 def _extract_json(text: str) -> dict[str, Any] | list[Any]:
+    """Parse a complete object/array, tolerating fences or surrounding prose only.
+
+    This intentionally does not invent closing braces or otherwise repair truncated JSON.
+    """
+
     stripped = text.strip()
     if stripped.startswith("```"):
         lines = stripped.splitlines()
@@ -44,17 +56,29 @@ def _extract_json(text: str) -> dict[str, Any] | list[Any]:
         stripped = "\n".join(lines).strip()
         if stripped.startswith("json"):
             stripped = stripped[4:].lstrip()
-    try:
-        value = json.loads(stripped)
-    except json.JSONDecodeError as exc:
-        raise ValidationFailure("LLM response is not valid JSON") from exc
-    if not isinstance(value, (dict, list)):
-        raise ValidationFailure("Structured LLM response must be a JSON object or array")
-    return value
+
+    candidates = [stripped]
+    candidates.extend(stripped[index:] for index, char in enumerate(stripped) if char in "[{")
+    decoder = json.JSONDecoder()
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            value, end = decoder.raw_decode(candidate)
+        except json.JSONDecodeError:
+            continue
+        trailing = candidate[end:].strip()
+        if trailing and not trailing.startswith("```"):
+            continue
+        if isinstance(value, (dict, list)):
+            return value
+    raise ValidationFailure("LLM response is not valid complete JSON")
 
 
 class GovernedLLMClient:
-    """Policy, budget, validation, and audit wrapper around an LLM provider."""
+    """Policy, budget, validation, retry, and audit wrapper around an LLM provider."""
 
     def __init__(
         self,
@@ -66,79 +90,95 @@ class GovernedLLMClient:
         self.policy = policy
         self.audit_sink = audit_sink
         self.calls = 0
+        self.provider_responses = 0
+        self.structured_output_failures = 0
         self.input_chars = 0
         self.output_chars = 0
         self.estimated_cost_usd = 0.0
         self.input_tokens = 0
         self.output_tokens = 0
         self.total_tokens = 0
-        self.usage_complete = True
-        self.cost_complete = True
+        self.usage_missing_calls = 0
+        self.cost_missing_calls = 0
+
+    @property
+    def usage_complete(self) -> bool:
+        return self.usage_missing_calls == 0
+
+    @property
+    def cost_complete(self) -> bool:
+        return self.cost_missing_calls == 0
 
     def generate(self, request: LLMRequest) -> LLMResponse:
         self._validate_request(request)
-        input_chars = len(request.system_instructions) + len(request.user_content)
-        self._check_budget(input_chars=input_chars, output_chars=0, additional_calls=1)
-        try:
-            response = self.provider.generate(request)
-        except Exception:
-            record = LLMAuditRecord(
-                request_id=request.request_id,
-                provider=request.provider,
-                model=request.model,
-                purpose=request.purpose,
-                data_classification=request.data_classification,
-                request_sha256=_sha256(request.system_instructions + "\n" + request.user_content),
-                prompt_content_recorded=self.policy.record_prompt_content,
-                status="failed",
-                input_chars=input_chars,
-                output_chars=0,
-            )
-            self._audit(record)
-            raise
+        current_request = request
+        structured = self.policy.require_structured_output and request.output_schema is not None
+        max_structured_attempts = 1 + (self.policy.structured_output_retries if structured else 0)
+        last_structured_error: LLMStructuredOutputError | None = None
 
-        output_chars = len(response.text)
-        self._check_budget(
-            input_chars=input_chars,
-            output_chars=output_chars,
-            additional_calls=1,
-            additional_cost=response.usage.estimated_cost_usd or 0.0,
-        )
-        if self.policy.require_structured_output and request.output_schema is not None:
-            if response.parsed is None:
-                response.parsed = _extract_json(response.text)
-        self.calls += 1
-        self.input_chars += input_chars
-        self.output_chars += output_chars
-        self.estimated_cost_usd += response.usage.estimated_cost_usd or 0.0
-        if response.usage.input_tokens is None or response.usage.output_tokens is None:
-            self.usage_complete = False
-        else:
-            self.input_tokens += response.usage.input_tokens
-            self.output_tokens += response.usage.output_tokens
-            self.total_tokens += response.usage.total_tokens or (response.usage.input_tokens + response.usage.output_tokens)
-        if response.usage.estimated_cost_usd is None:
-            self.cost_complete = False
-        self._audit(
-            LLMAuditRecord(
-                request_id=request.request_id,
-                response_id=response.response_id,
-                provider=request.provider,
-                model=request.model,
-                purpose=request.purpose,
-                data_classification=request.data_classification,
-                request_sha256=response.request_sha256,
-                output_sha256=response.output_sha256,
-                prompt_content_recorded=self.policy.record_prompt_content,
-                status=response.status,
-                latency_ms=response.latency_ms,
-                attempts=response.attempts,
+        for structured_attempt in range(max_structured_attempts):
+            input_chars = len(current_request.system_instructions) + len(current_request.user_content)
+            self._check_pre_call_budget(input_chars=input_chars)
+            try:
+                response = self.provider.generate(current_request)
+            except Exception:
+                self._audit(
+                    LLMAuditRecord(
+                        request_id=current_request.request_id,
+                        provider=current_request.provider,
+                        model=current_request.model,
+                        purpose=current_request.purpose,
+                        data_classification=current_request.data_classification,
+                        request_sha256=_sha256(
+                            current_request.system_instructions + "\n" + current_request.user_content
+                        ),
+                        prompt_content_recorded=self.policy.record_prompt_content,
+                        status="transport_failed",
+                        input_chars=input_chars,
+                        output_chars=0,
+                    )
+                )
+                raise
+
+            validation_error: str | None = None
+            if structured:
+                if response.status != "completed":
+                    reason = self._incomplete_reason(response)
+                    validation_error = (
+                        f"Provider response status was {response.status!r}"
+                        + (f": {reason}" if reason else "")
+                    )
+                elif response.parsed is None:
+                    try:
+                        response.parsed = _extract_json(response.text)
+                    except ValidationFailure as exc:
+                        validation_error = str(exc)
+
+            self._record_response(
+                request=current_request,
+                response=response,
                 input_chars=input_chars,
-                output_chars=output_chars,
-                usage=response.usage,
+                validation_error=validation_error,
             )
-        )
-        return response
+            budget_error = self._post_call_budget_error()
+            if budget_error is not None:
+                raise LLMBudgetExceeded(budget_error)
+
+            if validation_error is None:
+                return response
+
+            last_structured_error = LLMStructuredOutputError(validation_error, response)
+            can_retry = (
+                structured_attempt + 1 < max_structured_attempts
+                and response.status != "refused"
+            )
+            if not can_retry:
+                raise last_structured_error
+            current_request = self._retry_request(current_request, structured_attempt + 1)
+
+        if last_structured_error is not None:  # pragma: no cover
+            raise last_structured_error
+        raise LLMAdapterError("Structured-output attempt loop exited unexpectedly")  # pragma: no cover
 
     def _validate_request(self, request: LLMRequest) -> None:
         if request.provider != self.provider.name:
@@ -158,27 +198,112 @@ class GovernedLLMClient:
         if self.policy.require_structured_output and request.output_schema is None:
             raise ValidationFailure("Policy requires a structured output schema")
 
-    def _check_budget(
-        self,
-        input_chars: int,
-        output_chars: int,
-        additional_calls: int,
-        additional_cost: float = 0.0,
-    ) -> None:
+    def _check_pre_call_budget(self, input_chars: int) -> None:
         budget = self.policy.budget
-        # The pre-call and post-call checks both use the current counter. The post-call
-        # check verifies actual output before committing counters.
-        if self.calls + additional_calls > budget.max_calls:
+        if self.calls + 1 > budget.max_calls:
             raise LLMBudgetExceeded("LLM call budget exceeded")
         if self.input_chars + input_chars > budget.max_input_chars:
             raise LLMBudgetExceeded("LLM input character budget exceeded")
-        if self.output_chars + output_chars > budget.max_output_chars:
+        if self.output_chars > budget.max_output_chars:
             raise LLMBudgetExceeded("LLM output character budget exceeded")
         if (
             budget.max_estimated_cost_usd is not None
-            and self.estimated_cost_usd + additional_cost > budget.max_estimated_cost_usd
+            and self.estimated_cost_usd > budget.max_estimated_cost_usd
         ):
             raise LLMBudgetExceeded("LLM estimated cost budget exceeded")
+
+    def _post_call_budget_error(self) -> str | None:
+        budget = self.policy.budget
+        if self.output_chars > budget.max_output_chars:
+            return "LLM output character budget exceeded after the provider response"
+        if (
+            budget.max_estimated_cost_usd is not None
+            and self.estimated_cost_usd > budget.max_estimated_cost_usd
+        ):
+            return "LLM estimated cost budget exceeded after the provider response"
+        return None
+
+    def _record_response(
+        self,
+        *,
+        request: LLMRequest,
+        response: LLMResponse,
+        input_chars: int,
+        validation_error: str | None,
+    ) -> None:
+        output_chars = len(response.text)
+        self.calls += 1
+        self.provider_responses += 1
+        self.input_chars += input_chars
+        self.output_chars += output_chars
+
+        usage = response.usage
+        if usage.input_tokens is None or usage.output_tokens is None:
+            self.usage_missing_calls += 1
+        else:
+            self.input_tokens += usage.input_tokens
+            self.output_tokens += usage.output_tokens
+            self.total_tokens += usage.total_tokens or (usage.input_tokens + usage.output_tokens)
+        if usage.estimated_cost_usd is None:
+            self.cost_missing_calls += 1
+        else:
+            self.estimated_cost_usd += usage.estimated_cost_usd
+        if validation_error is not None:
+            self.structured_output_failures += 1
+
+        self._audit(
+            LLMAuditRecord(
+                request_id=request.request_id,
+                response_id=response.response_id,
+                provider=request.provider,
+                model=request.model,
+                purpose=request.purpose,
+                data_classification=request.data_classification,
+                request_sha256=response.request_sha256,
+                output_sha256=response.output_sha256,
+                prompt_content_recorded=self.policy.record_prompt_content,
+                status="invalid_structured_output" if validation_error else response.status,
+                provider_status=str(response.raw_metadata.get("response_status") or response.status),
+                structured_output_valid=None if not request.output_schema else validation_error is None,
+                validation_error=validation_error,
+                incomplete_reason=self._incomplete_reason(response),
+                latency_ms=response.latency_ms,
+                attempts=response.attempts,
+                input_chars=input_chars,
+                output_chars=output_chars,
+                usage=response.usage,
+            )
+        )
+
+    def _retry_request(self, request: LLMRequest, retry_index: int) -> LLMRequest:
+        multiplied = int(request.max_output_tokens * self.policy.structured_output_retry_token_multiplier)
+        next_tokens = min(
+            max(request.max_output_tokens + 1, multiplied),
+            self.policy.structured_output_retry_max_tokens,
+        )
+        metadata = dict(request.metadata)
+        metadata["structured_output_retry_index"] = retry_index
+        return request.model_copy(
+            update={
+                "request_id": new_id("llmreq"),
+                "system_instructions": (
+                    request.system_instructions
+                    + " The previous provider response was incomplete or invalid. Return one complete JSON value only, with no prose or code fences."
+                ),
+                "max_output_tokens": next_tokens,
+                "metadata": metadata,
+            }
+        )
+
+    @staticmethod
+    def _incomplete_reason(response: LLMResponse) -> str | None:
+        details = response.raw_metadata.get("incomplete_details")
+        if isinstance(details, dict):
+            reason = details.get("reason")
+            return str(reason) if reason else json.dumps(details, sort_keys=True)
+        if details:
+            return str(details)
+        return None
 
     def _audit(self, record: LLMAuditRecord) -> None:
         if self.audit_sink is not None:
@@ -213,18 +338,19 @@ class MockLLMAdapter:
             status="completed",
             text=text,
             parsed=parsed,
+            usage=LLMUsage(input_tokens=0, output_tokens=0, total_tokens=0, estimated_cost_usd=0.0),
             latency_ms=round((time.perf_counter() - started) * 1000, 3),
             request_sha256=request_hash,
             output_sha256=_sha256(text),
-            raw_metadata={"adapter": "MockLLMAdapter"},
+            raw_metadata={"adapter": "MockLLMAdapter", "response_status": "completed"},
         )
 
 
 class OpenAIResponsesAdapter:
     """Minimal standard-library adapter for the OpenAI Responses API.
 
-    The adapter intentionally stores no API key and records no prompt content.
-    Tests use a stub transport; live use requires OPENAI_API_KEY.
+    The adapter stores no API key, records no prompt content, and returns provider
+    status/usage even when structured-output validation must fail upstream.
     """
 
     name = "openai"
@@ -287,21 +413,28 @@ class OpenAIResponsesAdapter:
             try:
                 raw = self.transport(http_request, self.timeout_seconds)
                 text, refusal = self._extract_text(raw)
-                parsed = _extract_json(text) if request.output_schema is not None and text else None
                 usage_raw = raw.get("usage") or {}
                 usage = LLMUsage(
                     input_tokens=usage_raw.get("input_tokens"),
                     output_tokens=usage_raw.get("output_tokens"),
                     total_tokens=usage_raw.get("total_tokens"),
                 )
-                status = "refused" if refusal else "completed"
+                provider_status = str(raw.get("status") or "completed")
+                if refusal:
+                    status = "refused"
+                elif provider_status == "completed":
+                    status = "completed"
+                elif provider_status == "incomplete":
+                    status = "incomplete"
+                else:
+                    status = "failed"
                 return LLMResponse(
                     request_id=request.request_id,
                     provider=self.name,
                     model=request.model,
                     status=status,
                     text=text,
-                    parsed=parsed,
+                    parsed=None,
                     refusal=refusal,
                     usage=usage,
                     latency_ms=round((time.perf_counter() - started) * 1000, 3),
@@ -309,7 +442,10 @@ class OpenAIResponsesAdapter:
                     request_sha256=_sha256(request.system_instructions + "\n" + request.user_content),
                     output_sha256=_sha256(text) if text else None,
                     provider_response_id=raw.get("id"),
-                    raw_metadata={"response_status": raw.get("status")},
+                    raw_metadata={
+                        "response_status": provider_status,
+                        "incomplete_details": raw.get("incomplete_details"),
+                    },
                 )
             except urllib.error.HTTPError as exc:
                 last_error = exc
