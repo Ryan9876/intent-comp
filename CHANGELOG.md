@@ -9,7 +9,7 @@
 - Complete fresh controlled live-study run 30737052302 with 24 valid outputs, zero execution errors, and exact cost of $1.97318.
 - Complete 48 independent blind reviews, providing two reviews for every output.
 - Pass the post-review publication guard.
-- Retain reviewed evidence, checksums, manifest, reviewer-safe archive, and restricted audit archive under `evidence/v0.4.1/`.
+- Retain reviewed results, normalized reviews, study summary, publication record, manifest, checksums, restricted mapping, execution ledger, audit digests, effective policy, and original-artifact integrity hashes under `evidence/v0.4.1/`.
 - Document Structured Prompt as the highest observed quality and quality-to-cost result while preserving sample-size and generalizability limits.
 
 ## 0.4.0 — 2026-08-02
