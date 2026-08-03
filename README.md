@@ -1,40 +1,46 @@
-# Intent Compiler v0.4.0
+# Intent Compiler v0.4.1
 
-A governed reference implementation for Intent Compilation with a controlled live-study release candidate.
+A governed reference implementation for Intent Compilation: a finite, artifact-based workflow that transforms ambiguous objectives into traceable execution and verifiable outcomes.
 
-## v0.4 highlights
+## v0.4.1 status
+
+The v0.4.1 reliability repair and fresh controlled live study are complete. GitHub Actions run `30737052302` executed all 24 scheduled outputs from source commit `c7e8f8f1615b49be36eed001e62de0613b0afc69`, recorded exact usage and cost, and produced a complete reviewer packet. Three independent reviewers completed 48 blind reviews, satisfying the required two reviews per output. The post-review publication guard passed.
+
+Reviewed evidence is retained under [`evidence/v0.4.1/`](evidence/v0.4.1/). See [`RESULTS.md`](evidence/v0.4.1/RESULTS.md) for the findings and interpretation limits.
+
+## Observed benchmark result
+
+| Approach | Mean blind-review score | Mean cost/output | Mean latency | Calls/output |
+|---|---:|---:|---:|---:|
+| Structured Prompt | **4.8889** | $0.02593 | 18.47 s | 1 |
+| Simple Chain | 4.8611 | $0.07532 | 37.06 s | 3 |
+| Intent Compilation | 4.7917 | $0.20599 | 90.57 s | 6 |
+| Direct Prompt | 4.7083 | $0.02163 | 15.32 s | 1 |
+
+Structured Prompt produced the highest observed mean score and the best observed quality-to-cost tradeoff in this sample. Intent Compilation produced the strongest traceability result, but it did not have the highest overall quality score.
+
+These are descriptive controlled-sample findings, not proof of universal or statistically significant superiority.
+
+## v0.4 controls
 
 - approved, dated live-model and pricing profiles;
-- no-content credential/network/cost preflight;
-- hard study spend limit and run reservation;
-- resumable blinded study execution;
+- no-content credential, network, schedule, and cost preflight;
+- hard study spend limits and conservative per-run reservation;
+- resumable blinded study execution with exact historical accounting;
 - balanced independent reviewer assignment;
-- publication guards preventing unsupported quality claims.
+- publication guards preventing unsupported quality claims;
+- separate reviewer-safe and restricted audit evidence.
 
-See `docs/live_study_release_candidate.md` and `VALIDATION_REPORT.md`.
-
-
-A reference implementation of the Intent Compilation Methodology: a finite, artifact-based workflow that transforms ambiguous objectives into governed, verifiable outcomes.
-
-## What v0.3 adds
-
-- Randomized, balanced benchmark schedules
-- Blinded review packets
-- Separate private approach mappings
-- Review templates and validation
-- Exact provider token capture when available
-- Externally supplied dated pricing
-- Statistical summaries and paired comparison plumbing
-- Six controlled scenarios spanning software, networks, leadership, research, governance, and incident response
-
-## Important evidence boundary
-
-A mock run proves only that orchestration, randomization, blinding, storage, and analysis work. A live model run still does not establish superiority until outputs receive independent blind review.
-
-## Quick validation
+## Local validation
 
 ```bash
+python -m pip install -e '.[dev]'
 python -m pytest
+```
+
+## Mock controlled benchmark
+
+```bash
 python -m intent_compiler.cli benchmark-study-run \
   --provider mock \
   --model mock-governed-v1 \
@@ -45,24 +51,13 @@ python -m intent_compiler.cli benchmark-study-run \
 
 ## Live controlled benchmark
 
-Live use requires an approved model, current pricing configuration, an environment-provided `OPENAI_API_KEY`, and explicit network authorization.
+Live use requires an approved model, current pricing configuration, an environment-provided `OPENAI_API_KEY`, explicit network authorization, an exact confirmation token, and a spend ceiling within policy.
 
-```bash
-export OPENAI_API_KEY='...'
-python -m intent_compiler.cli benchmark-study-run \
-  --provider openai \
-  --model APPROVED_MODEL \
-  --allow-network \
-  --pricing pricing.current.json \
-  --config examples/study_config.json \
-  --scenarios examples/controlled_benchmark_scenarios.json \
-  --output-dir controlled-study-live
-```
+See:
 
-Do not commit credentials, prompt content, or the private blind mapping to a reviewer-accessible location.
+- [`docs/controlled_benchmark.md`](docs/controlled_benchmark.md)
+- [`docs/live_study_release_candidate.md`](docs/live_study_release_candidate.md)
+- [`VALIDATION_REPORT.md`](VALIDATION_REPORT.md)
+- [`evidence/v0.4.1/RESULTS.md`](evidence/v0.4.1/RESULTS.md)
 
-See `docs/controlled_benchmark.md` for the protocol.
-## v0.4.1 live-study reliability boundary
-
-Version 0.4.1 records provider usage before structured-output validation, retries one incomplete/invalid structured response within a bounded token ceiling, and withholds reviewer packets until all scheduled outputs are valid. Legacy v0.4.0 records with incomplete failed-response billing evidence cannot be resumed as an exact-cost study; start a fresh study instead.
-
+Do not expose credentials or the restricted private audit archive to reviewers.
