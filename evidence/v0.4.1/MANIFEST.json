@@ -1,0 +1,141 @@
+{
+  "artifacts": {
+    "RESULTS.md": {
+      "repository_path": "evidence/v0.4.1/RESULTS.md",
+      "sha256": "f8d8aa3042014b8e02542037356bc45740eb9659940c3ba2818a9892cc3c23ca",
+      "size_bytes": 2651
+    },
+    "combined-independent-reviews.csv": {
+      "repository_path": "evidence/v0.4.1/combined-independent-reviews.csv",
+      "sha256": "22b266ef1cd1cd4074f0171eeeb451521473ba58dc21dc99210dc86f1098985a",
+      "size_bytes": 17917
+    },
+    "combined-independent-reviews.jsonl": {
+      "repository_path": "evidence/v0.4.1/combined-independent-reviews.jsonl",
+      "sha256": "805003e4dcaac7a774f50da2ba27dc14d156edcd90aff5584187719f9364070c",
+      "size_bytes": 30542
+    },
+    "private-audit-archive.zip.b64.part01": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part01",
+      "sha256": "0272c2539f1e91ae841c94e6edb9258726d3ea550ca67405c6e5049d66e52296",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part02": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part02",
+      "sha256": "d26b75499bfb4a823c70ed643b264ede711aade7f3768ebb7b389fb4d558ad44",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part03": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part03",
+      "sha256": "175b70daa20a07203e94d1346b6c37dd3aca3d4ea2ceecf5cc10b18bc568a68e",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part04": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part04",
+      "sha256": "347b5b010be4bb428c4b90e1d0cd063b46bbf23636b590af3be0d6cd36dcee0b",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part05": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part05",
+      "sha256": "31f63114186dd19108b37d60c1c04a82b5cbc0aef113504a1d568adfe15cbde0",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part06": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part06",
+      "sha256": "20862a20b6ba6c0e7e1441ba5626be3137ff759c16858205a78bda229cb8f65d",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part07": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part07",
+      "sha256": "38a94a271c337dd1e24c7e39bd708f2e005295e6332a3142269c833fbbc046c8",
+      "size_bytes": 70001
+    },
+    "private-audit-archive.zip.b64.part08": {
+      "repository_path": "evidence/v0.4.1/private-audit-archive.zip.b64.part08",
+      "sha256": "f1d692d4b3072dbac30b8666d4d06c4ab8f6551b0b47a95b9c8e072dbb79213f",
+      "size_bytes": 59881
+    },
+    "private_audit_archive": {
+      "classification": "restricted",
+      "decoded_filename": "private-audit-archive.zip",
+      "decoded_sha256": "9ba869cfa4a8ed3e09af11e1bd19023f9e4d7d357c3bd6a3359283f93607d649",
+      "decoded_size_bytes": 412408,
+      "encoding": "base64",
+      "repository_parts": [
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part01",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part02",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part03",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part04",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part05",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part06",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part07",
+        "evidence/v0.4.1/private-audit-archive.zip.b64.part08"
+      ]
+    },
+    "publication-check-after-review.json": {
+      "repository_path": "evidence/v0.4.1/publication-check-after-review.json",
+      "sha256": "109b0935b5b01b64c71e6758c4dd3cd005902f69d5756d3afeca86ac01f04d64",
+      "size_bytes": 544
+    },
+    "review-normalization-notes.txt": {
+      "repository_path": "evidence/v0.4.1/review-normalization-notes.txt",
+      "sha256": "c76799e0fa4efce95aa55b68d7a7bb9f7062385344c058923e8cffe1e1a2b68c",
+      "size_bytes": 294
+    },
+    "reviewed-evidence-archive.zip.b64.part01": {
+      "repository_path": "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part01",
+      "sha256": "b649f60c50e61d9679f918f3f95338892bbdb32c48ddeb9cb9d75bbdc88f1bbd",
+      "size_bytes": 70001
+    },
+    "reviewed-evidence-archive.zip.b64.part02": {
+      "repository_path": "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part02",
+      "sha256": "ce246fffdd03976a351bcd836afa88508c3b4a569d48de174bb884e921a82708",
+      "size_bytes": 70001
+    },
+    "reviewed-evidence-archive.zip.b64.part03": {
+      "repository_path": "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part03",
+      "sha256": "5b9703f43fd62774eaed4fb84e605ec45c003dda1207d55837ef5f7650ab7dd4",
+      "size_bytes": 125
+    },
+    "reviewed_evidence_archive": {
+      "decoded_filename": "reviewed-evidence-archive.zip",
+      "decoded_sha256": "afec3bd23d9fe96d1f2359cfe5310848dab320abbe93f70a35bf766403e46f42",
+      "decoded_size_bytes": 105092,
+      "encoding": "base64",
+      "repository_parts": [
+        "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part01",
+        "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part02",
+        "evidence/v0.4.1/reviewed-evidence-archive.zip.b64.part03"
+      ]
+    },
+    "study-summary-after-review.json": {
+      "repository_path": "evidence/v0.4.1/study-summary-after-review.json",
+      "sha256": "8d9a2f9c4a46e93cd6166c1c16ce205fd674fed54c42210919b34fe9ad177af0",
+      "size_bytes": 3522
+    }
+  },
+  "completed_runs": 24,
+  "created_at": "2026-08-03T02:16:23.728736+00:00",
+  "exact_total_cost_usd": 1.97318,
+  "execution_errors": 0,
+  "expected_runs": 24,
+  "interpretation_boundary": "Descriptive controlled-sample evidence; not universal or statistically significant superiority.",
+  "methodology_comparison_allowed": true,
+  "minimum_reviews_per_output": 2,
+  "model": "gpt-5.6-terra",
+  "outputs_with_sufficient_reviews": 24,
+  "package": "intent-compiler-v0.4.1-reviewed-live-study-evidence",
+  "provider_kind": "live",
+  "publication_guard_passed": true,
+  "quality_claim_allowed": true,
+  "repository": "Ryan9876/intent-comp",
+  "schema_version": "1.0",
+  "source_commit_sha": "c7e8f8f1615b49be36eed001e62de0613b0afc69",
+  "source_commit_url": "https://github.com/Ryan9876/intent-comp/commit/c7e8f8f1615b49be36eed001e62de0613b0afc69",
+  "spend_limit_usd": 5.0,
+  "study_id": "study-controlled-v1",
+  "total_reviews": 48,
+  "usage_complete": true,
+  "workflow_run_id": "30737052302",
+  "workflow_url": "https://github.com/Ryan9876/intent-comp/actions/runs/30737052302"
+}
