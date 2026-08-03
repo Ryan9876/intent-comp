@@ -1,0 +1,34 @@
+{
+  "files": {
+    ".intent-compiler-live-study/llm-audit.jsonl": {
+      "sha256": "d137ee351d719a564f3482857f0995faa24b0517d7ed83f66e4dfdb9307727b0",
+      "size_bytes": 48949
+    },
+    "artifact_zip": {
+      "sha256": "84045a91e52b210e8d3f6d08ccfb1b45dc882b64d8027d4dcf065c57df3be598",
+      "size_bytes": 134813
+    },
+    "live-study-output/private-blind-mapping.json": {
+      "sha256": "9b875ac57691e16c18858adfc6ecc910733f7cecc32b8095e504c9705c5e3c13",
+      "size_bytes": 4122
+    },
+    "live-study-output/publication-check-before-review.json": {
+      "sha256": "d90540d79d0ceedd607aa4a78a02bc8893ab698ddaea295d8512cacb844a30b3",
+      "size_bytes": 655
+    },
+    "live-study-output/resume-result.json": {
+      "sha256": "23999f9bc9fbfab1c16dd05d0ff980620a3a94e0e10f88d3450bd192c0f4e17e",
+      "size_bytes": 269929
+    },
+    "live-study-output/run-records.jsonl": {
+      "sha256": "722259b7191dc7e0b56afadc3cfe3d6af1e4777b0f22a0bcfd117ba30e27f661",
+      "size_bytes": 247963
+    },
+    "runtime-live-study-policy.json": {
+      "sha256": "e9eca9ea1363670746ec51a7a00e5e05d0692552e51cc17deef30d02761c4a69",
+      "size_bytes": 389
+    }
+  },
+  "source_commit_sha": "c7e8f8f1615b49be36eed001e62de0613b0afc69",
+  "workflow_run_id": "30737052302"
+}
