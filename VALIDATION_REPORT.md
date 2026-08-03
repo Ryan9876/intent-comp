@@ -56,7 +56,7 @@ Comparative outcome-quality reporting is therefore permitted for this study. The
 
 ## Evidence retention
 
-The final reviewed evidence, manifest, checksums, reviewer-safe archive, and restricted audit archive are retained under [`evidence/v0.4.1/`](evidence/v0.4.1/). The source code under test remains bound to commit `c7e8f8f1615b49be36eed001e62de0613b0afc69`; the evidence closeout commit and merge history provide the immutable repository identity for the retained package.
+The repository retains the final reviewed results, full normalized review table, machine-readable study summary, passing publication check, manifest, checksums, restricted private mapping, execution ledger, per-call audit digests, effective policy, and integrity hashes for the original workflow artifacts under [`evidence/v0.4.1/`](evidence/v0.4.1/). The original binary workflow artifacts and Excel report remain associated with completed run `30737052302` and are bound by the retained integrity hashes. The source code under test remains bound to commit `c7e8f8f1615b49be36eed001e62de0613b0afc69`; this closeout merge provides the immutable repository identity for the durable evidence set.
 
 ## Remaining boundary
 
