@@ -33,16 +33,13 @@ These results are descriptive evidence for this controlled sample. They do not e
 ## Evidence files
 
 - `combined-independent-reviews.csv`: normalized review table.
-- `combined-independent-reviews.jsonl`: review records in repository import format.
 - `study-summary-after-review.json`: approach summaries, bootstrap intervals, and paired win rates.
 - `publication-check-after-review.json`: passing post-review publication guard.
 - `review-normalization-notes.txt`: documented normalization of literal `None` entries.
-- `reviewed-evidence-archive.zip.b64.part*`: split base64-encoded reviewer-safe archive, including the final Excel report and original reviewer packet.
-- `private-audit-archive.zip.b64.part*`: split base64-encoded restricted audit archive. Keep access limited to repository administrators.
-- `SHA256SUMS`: checksums for all retained evidence and decoded archives.
+- `restricted/private-blind-mapping.json`: private unblinding map, retained only in this private repository.
+- `restricted/run-records-audit-summary.json`: compact per-output execution, usage, and cost record.
+- `restricted/llm-audit-digest-part*.jsonl`: per-call audit metadata and content hashes without prompt content.
+- `restricted/private-controls-integrity.json`: hashes of the original private-control artifact and its files.
+- `SHA256SUMS`: checksums for all retained evidence files.
 
-To restore an archive:
-
-```bash
-python reassemble_archives.py
-```
+The original binary workflow artifacts and Excel report remain available in the completed-run package, while the repository retains the machine-readable review, execution, cost, mapping, and audit evidence needed to reproduce and verify the reported findings.
