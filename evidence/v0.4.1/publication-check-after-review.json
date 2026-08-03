@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-08-03T02:06:12.793162+00:00",
+  "study_id": "study-controlled-v1",
+  "expected_runs": 24,
+  "completed_runs": 24,
+  "provider_kind": "live",
+  "total_cost_usd": 1.97318,
+  "total_cost_is_lower_bound": false,
+  "spend_limit_usd": 5.0,
+  "execution_errors": 0,
+  "usage_incomplete_records": 0,
+  "outputs_with_sufficient_reviews": 24,
+  "outputs_requiring_reviews": 24,
+  "exact_usage_complete": true,
+  "quality_claim_allowed": true,
+  "methodology_superiority_claim_allowed": true,
+  "blockers": [],
+  "warnings": []
+}
