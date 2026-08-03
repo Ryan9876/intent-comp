@@ -1,0 +1,1 @@
+Reviewer workbook instructions used the literal text 'None' to indicate that no critical error was found. During import, case-insensitive none-like values were normalized to an empty critical_errors list. Two substantive critical-error comments remained and are included in the final analysis.

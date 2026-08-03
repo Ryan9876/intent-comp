@@ -1,0 +1,111 @@
+{
+  "artifact_source": {
+    "artifact_retention_note": "Original GitHub Actions artifacts had 14-day retention; durable machine-readable evidence and integrity hashes are retained in this repository.",
+    "private_controls_artifact_id": 8830136854,
+    "reviewer_packet_artifact_id": 8830136731
+  },
+  "artifacts": {
+    "RESULTS.md": {
+      "classification": "reviewed",
+      "repository_path": "evidence/v0.4.1/RESULTS.md",
+      "sha256": "df169a26e03a28a3cfe61d3a9da37ed0fcaa0dc218f0ae2dc8d5eb1e9c767763",
+      "size_bytes": 2787
+    },
+    "combined-independent-reviews.csv": {
+      "classification": "reviewed",
+      "repository_path": "evidence/v0.4.1/combined-independent-reviews.csv",
+      "sha256": "22b266ef1cd1cd4074f0171eeeb451521473ba58dc21dc99210dc86f1098985a",
+      "size_bytes": 17917
+    },
+    "publication-check-after-review.json": {
+      "classification": "reviewed",
+      "repository_path": "evidence/v0.4.1/publication-check-after-review.json",
+      "sha256": "109b0935b5b01b64c71e6758c4dd3cd005902f69d5756d3afeca86ac01f04d64",
+      "size_bytes": 544
+    },
+    "restricted/llm-audit-digest-part01.jsonl": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/llm-audit-digest-part01.jsonl",
+      "sha256": "d5189d9ccbaa02e3f0137b16379b28aeaebcb6d568e40fcb41f112141e166318",
+      "size_bytes": 15814
+    },
+    "restricted/llm-audit-digest-part02.jsonl": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/llm-audit-digest-part02.jsonl",
+      "sha256": "d891da177267e548d28988dc0f3e47985c9deb548d25e51d6ec0e66c9edb8652",
+      "size_bytes": 15817
+    },
+    "restricted/llm-audit-digest-part03.jsonl": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/llm-audit-digest-part03.jsonl",
+      "sha256": "697d50dec5cdb6029b6c7097555d11119f471f5027599f538fcd3b5dfebb0717",
+      "size_bytes": 15800
+    },
+    "restricted/private-blind-mapping.json": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/private-blind-mapping.json",
+      "sha256": "9b875ac57691e16c18858adfc6ecc910733f7cecc32b8095e504c9705c5e3c13",
+      "size_bytes": 4122
+    },
+    "restricted/private-controls-integrity.json": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/private-controls-integrity.json",
+      "sha256": "33ce10bff34cdb01d05c7a52d897b5371c79c56c766d29a66a8753861025ae09",
+      "size_bytes": 1264
+    },
+    "restricted/publication-check-before-review.json": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/publication-check-before-review.json",
+      "sha256": "d90540d79d0ceedd607aa4a78a02bc8893ab698ddaea295d8512cacb844a30b3",
+      "size_bytes": 655
+    },
+    "restricted/run-records-audit-summary.json": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/run-records-audit-summary.json",
+      "sha256": "781b00870f468a015345ce86bfca4227d073123116056a45aeb77903daec2957",
+      "size_bytes": 18070
+    },
+    "restricted/runtime-live-study-policy.json": {
+      "classification": "restricted",
+      "repository_path": "evidence/v0.4.1/restricted/runtime-live-study-policy.json",
+      "sha256": "e9eca9ea1363670746ec51a7a00e5e05d0692552e51cc17deef30d02761c4a69",
+      "size_bytes": 389
+    },
+    "review-normalization-notes.txt": {
+      "classification": "reviewed",
+      "repository_path": "evidence/v0.4.1/review-normalization-notes.txt",
+      "sha256": "c76799e0fa4efce95aa55b68d7a7bb9f7062385344c058923e8cffe1e1a2b68c",
+      "size_bytes": 294
+    },
+    "study-summary-after-review.json": {
+      "classification": "reviewed",
+      "repository_path": "evidence/v0.4.1/study-summary-after-review.json",
+      "sha256": "8d9a2f9c4a46e93cd6166c1c16ce205fd674fed54c42210919b34fe9ad177af0",
+      "size_bytes": 3522
+    }
+  },
+  "completed_runs": 24,
+  "created_at": "2026-08-03T02:16:23.728736+00:00",
+  "exact_total_cost_usd": 1.97318,
+  "execution_errors": 0,
+  "expected_runs": 24,
+  "interpretation_boundary": "Descriptive controlled-sample evidence; not universal or statistically significant superiority.",
+  "methodology_comparison_allowed": true,
+  "minimum_reviews_per_output": 2,
+  "model": "gpt-5.6-terra",
+  "outputs_with_sufficient_reviews": 24,
+  "package": "intent-compiler-v0.4.1-reviewed-live-study-evidence",
+  "provider_kind": "live",
+  "publication_guard_passed": true,
+  "quality_claim_allowed": true,
+  "repository": "Ryan9876/intent-comp",
+  "schema_version": "1.1",
+  "source_commit_sha": "c7e8f8f1615b49be36eed001e62de0613b0afc69",
+  "source_commit_url": "https://github.com/Ryan9876/intent-comp/commit/c7e8f8f1615b49be36eed001e62de0613b0afc69",
+  "spend_limit_usd": 5.0,
+  "study_id": "study-controlled-v1",
+  "total_reviews": 48,
+  "usage_complete": true,
+  "workflow_run_id": "30737052302",
+  "workflow_url": "https://github.com/Ryan9876/intent-comp/actions/runs/30737052302"
+}

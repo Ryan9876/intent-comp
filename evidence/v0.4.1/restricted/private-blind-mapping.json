@@ -1,0 +1,146 @@
+{
+  "out-046bce2e8a6aabc8": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-848cfa65145b",
+    "scenario_id": "network-vpn-migration"
+  },
+  "out-0db13d90df8dde78": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-d5478d0115dc",
+    "scenario_id": "leadership-delegation"
+  },
+  "out-0dc8a604def35fc1": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-4ad992b5e692",
+    "scenario_id": "leadership-delegation"
+  },
+  "out-2b98fcf97bdc47cd": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-dc05e8c3265c",
+    "scenario_id": "software-feature-contract"
+  },
+  "out-343566f5d9b53740": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-a22d04068843",
+    "scenario_id": "research-conflicting-sources"
+  },
+  "out-378e29d05254b147": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-1bf67a6a3c0e",
+    "scenario_id": "governance-control-design"
+  },
+  "out-3c20fe70d7e13c1f": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-3d20b2f22aa6",
+    "scenario_id": "governance-control-design"
+  },
+  "out-4708aec92a6ee55c": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-9f797362eada",
+    "scenario_id": "research-conflicting-sources"
+  },
+  "out-47e923a83d897b9c": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-cf39c552b79c",
+    "scenario_id": "software-feature-contract"
+  },
+  "out-4fae9aa88a4a764a": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-58e4ce547e7f",
+    "scenario_id": "network-vpn-migration"
+  },
+  "out-508e74ba0389cad9": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-cf4ed16829c7",
+    "scenario_id": "leadership-delegation"
+  },
+  "out-50da184b48543237": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-ec189e9f8fc0",
+    "scenario_id": "incident-response-compressed"
+  },
+  "out-70a46d6d512775b4": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-0bd4da446eeb",
+    "scenario_id": "incident-response-compressed"
+  },
+  "out-7c1f9763ab301965": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-596b2009711a",
+    "scenario_id": "incident-response-compressed"
+  },
+  "out-9766694bc902f53f": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-6fa83a995a24",
+    "scenario_id": "network-vpn-migration"
+  },
+  "out-97d7b413e37f45c9": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-1e39b1b24caa",
+    "scenario_id": "network-vpn-migration"
+  },
+  "out-9bb31a9ba41121f3": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-f9fc0cd83221",
+    "scenario_id": "research-conflicting-sources"
+  },
+  "out-a409c13b4636c2f3": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-0c4e23bb9902",
+    "scenario_id": "incident-response-compressed"
+  },
+  "out-bf1e434eea4d01a7": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-97a1a19003cb",
+    "scenario_id": "governance-control-design"
+  },
+  "out-c3aeddeb10ce8c40": {
+    "approach": "structured_prompt",
+    "repeat_index": 1,
+    "run_id": "run-984434bb2e9d",
+    "scenario_id": "leadership-delegation"
+  },
+  "out-e2a88c1d2035ae30": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-9b5eeedff782",
+    "scenario_id": "software-feature-contract"
+  },
+  "out-e77859dd10dc5107": {
+    "approach": "direct_prompt",
+    "repeat_index": 1,
+    "run_id": "run-1c1ddfcf5780",
+    "scenario_id": "software-feature-contract"
+  },
+  "out-eb73fe70f9878947": {
+    "approach": "intent_compilation",
+    "repeat_index": 1,
+    "run_id": "run-2a2d451e7aea",
+    "scenario_id": "research-conflicting-sources"
+  },
+  "out-f04174b675c63235": {
+    "approach": "simple_chain",
+    "repeat_index": 1,
+    "run_id": "run-1750abd3201d",
+    "scenario_id": "governance-control-design"
+  }
+}

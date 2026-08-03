@@ -1,15 +1,16 @@
 # Changelog
 
-## 0.4.1 — Live-study reliability repair
+## 0.4.1 — Reviewed live-study evidence closeout
 
 - Preserve provider response status, token usage, and audit evidence before structured-output validation.
 - Detect incomplete responses and retry invalid structured output once with a bounded token increase.
-- Distinguish provider completion, schema validity, usage completeness, and execution errors.
 - Prevent legacy records with incomplete historical billing evidence from being resumed as exact-cost studies.
-- Retry failed outputs while preserving prior known attempt cost for v0.4.1-compatible records.
 - Withhold reviewer packets until every scheduled output is valid and usage-complete.
-- Mark incomplete study cost as a lower bound in the publication guard.
-- Include hidden audit records in private GitHub Actions artifacts and support optional prior-run artifact input.
+- Complete fresh controlled live-study run 30737052302 with 24 valid outputs, zero execution errors, and exact cost of $1.97318.
+- Complete 48 independent blind reviews, providing two reviews for every output.
+- Pass the post-review publication guard.
+- Retain reviewed evidence, checksums, manifest, reviewer-safe archive, and restricted audit archive under `evidence/v0.4.1/`.
+- Document Structured Prompt as the highest observed quality and quality-to-cost result while preserving sample-size and generalizability limits.
 
 ## 0.4.0 — 2026-08-02
 

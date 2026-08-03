@@ -1,36 +1,31 @@
-# Live Study Release Candidate
+# Live Study Evidence Release — v0.4.1
 
-Version 0.4 adds controls needed before a live comparative run:
+Version 0.4.1 contains the controls and retained evidence for a complete live comparative study.
 
-- an approved model profile with dated official pricing;
-- a hard total-study spend limit and per-run reserve;
+## Guarded execution controls
+
+- approved model profile with dated pricing;
+- hard total-study spend limit and conservative per-run reserve;
 - credential and network preflight without sending content;
 - resumable execution keyed by blinded output ID;
+- exact usage and historical-cost accounting;
 - balanced independent reviewer assignment;
-- publication guards that block quality claims for mock, incomplete, unreviewed, over-budget, or usage-incomplete studies.
+- publication guards for incomplete, unreviewed, over-budget, error-containing, or usage-incomplete studies.
 
-## Selected model
+## Completed study
 
-The example profile selects GPT-5.6 Terra (`gpt-5.6-terra`) because the official OpenAI model catalog describes it as balancing intelligence and cost. The profile records pricing effective 2026-08-02: $2.00 per million input tokens, $0.20 cached input, and $12.00 per million output tokens. Recheck official pricing before every live run.
+GitHub Actions run `30737052302` executed 24 outputs using GPT-5.6 Terra from source commit `c7e8f8f1615b49be36eed001e62de0613b0afc69`. The run completed with zero execution errors, complete token and cost evidence, and an exact recorded cost of $1.97318.
 
-## Safety boundary
+Three independent reviewers completed 48 blind reviews. Every output received two reviews. The post-review publication guard passed.
 
-A live run is blocked unless all of the following are true:
+## Observed findings
 
-1. `OPENAI_API_KEY` is present in the local environment.
-2. Network access is explicitly enabled.
-3. The scenario schedule fits the maximum run count.
-4. The conservative reserved cost fits the approved spend limit.
-5. The model and pricing profiles have official sources and an effective date.
-
-The package never stores the API key and does not record prompt content by default.
+Structured Prompt had the highest observed mean blind-review score at 4.8889/5 and the best observed quality-to-cost tradeoff. Simple Chain scored 4.8611, Intent Compilation scored 4.7917, and Direct Prompt scored 4.7083. Intent Compilation had the strongest traceability result, but was the slowest and most expensive approach.
 
 ## Publication boundary
 
-No comparative quality or superiority claim is allowed until:
+The completed controls permit comparative reporting for this study. Claims must remain bounded to the tested sample. The study does not establish universal or statistically significant methodology superiority because it used six scenarios, one model, one repeat per scenario, and three reviewers.
 
-- every scheduled live run is present;
-- exact token and cost data are recorded;
-- there are no run errors;
-- the total is within the approved spend limit;
-- every output has the required number of independent blind reviews.
+## Retained evidence
+
+The evidence package is stored under [`evidence/v0.4.1/`](../evidence/v0.4.1/), with reviewer-safe evidence separated from a restricted audit archive. Checksums and a machine-readable manifest are included.

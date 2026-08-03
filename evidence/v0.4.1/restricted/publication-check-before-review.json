@@ -1,0 +1,23 @@
+{
+  "blockers": [
+    "Only 0 of 24 outputs have the required blind reviews."
+  ],
+  "completed_runs": 24,
+  "exact_usage_complete": true,
+  "execution_errors": 0,
+  "expected_runs": 24,
+  "generated_at": "2026-08-02T07:19:57.140545+00:00",
+  "methodology_superiority_claim_allowed": false,
+  "outputs_requiring_reviews": 24,
+  "outputs_with_sufficient_reviews": 0,
+  "provider_kind": "live",
+  "quality_claim_allowed": false,
+  "spend_limit_usd": 5.0,
+  "study_id": "study-controlled-v1",
+  "total_cost_is_lower_bound": false,
+  "total_cost_usd": 1.97318,
+  "usage_incomplete_records": 0,
+  "warnings": [
+    "No independent reviews were supplied."
+  ]
+}
