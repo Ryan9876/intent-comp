@@ -28,4 +28,4 @@ The completed controls permit comparative reporting for this study. Claims must 
 
 ## Retained evidence
 
-The evidence package is stored under [`evidence/v0.4.1/`](../evidence/v0.4.1/), with reviewer-safe evidence separated from a restricted audit archive. Checksums and a machine-readable manifest are included.
+The durable evidence set is stored under [`evidence/v0.4.1/`](../evidence/v0.4.1/). Reviewer-derived results and normalized scores are separated from restricted private mapping, execution-ledger, policy, and per-call audit metadata. The repository also retains checksums and integrity hashes for the original GitHub Actions artifacts, while the original binary artifacts remain associated with completed run `30737052302`.
